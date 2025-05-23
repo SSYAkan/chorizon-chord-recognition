@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chord Visualizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Dancing+Script:wght@700&family=Cormorant:wght@400;700&family=Montserrat:wght@400;500;600&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        // 创建音频上下文
+        let audioContext = null;
+        let isAudioContextInitialized = false;
+        
+        // 创建音符频率映射
+        const noteFrequencies = {
+            // 低八度
+            'C1': 130.81, 'C#1': 138.59, 'D1': 146.83, 'D#1': 155.56,
+            'E1': 164.81, 'F1': 174.61, 'F#1': 185.00, 'G1': 196.00,
+            'G#1': 207.65, 'A1': 220.00, 'A#1': 233.08, 'B1': 246.94,
+            // 中八度
+            'C2': 261.63, 'C#2': 277.18, 'D2': 293.66, 'D#2': 311.13,
+            'E2': 329.63, 'F2': 349.23, 'F#2': 369.99, 'G2': 392.00,
+            'G#2': 415.30, 'A2': 440.00, 'A#2': 466.16, 'B2': 493.88,
+            // 高八度
+            'C3': 523.25, 'C#3': 554.37, 'D3': 587.33, 'D#3': 622.25,
+            'E3': 659.25, 'F3': 698.46, 'F#3': 739.99, 'G3': 783.99,
+            'G#3': 830.61, 'A3': 880.00, 'A#3': 932.33, 'B3': 987.77
+        };
+
+        // 播放音符函数
+        function playNote(note) {
+            if (!isAudioContextInitialized) {
+                return;
+            }
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.value = noteFrequencies[note];
+            
+            // 根据音高调整音量
+            let baseGain = 0.1;
+            let octave = parseInt(note.slice(-1));
+            let gainMultiplier = 1;
+            
+            if (octave === 1) {
+                gainMultiplier = 1.5;
+            } else if (octave === 2) {
+                gainMultiplier = 1.0;
+            } else if (octave === 3) {
+                gainMultiplier = 0.8;
+            }
+            
+            gainNode.gain.value = baseGain * gainMultiplier;
+            
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        // 为琴键添加鼠标事件
+        function addPianoKeyEvents() {
+            const keys = document.querySelectorAll('.nav-bar a');
+            keys.forEach(key => {
+                key.addEventListener('mouseenter', () => {
+                    if (isAudioContextInitialized) {
+                        const note = key.getAttribute('data-note');
+                        if (noteFrequencies[note]) {
+                            playNote(note);
+                        }
+                    }
+                });
+            });
+        }
+
+        // 初始化音频上下文
+        async function initAudioContext() {
+            if (!isAudioContextInitialized) {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioContext.state === 'suspended') {
+                        await audioContext.resume();
+                    }
+                    isAudioContextInitialized = true;
+                    console.log('AudioContext initialized successfully');
+                } catch (e) {
+                    console.error('Failed to initialize AudioContext:', e);
+                }
+            }
+        }
+
+        // 页面加载完成后初始化所有功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 添加点击事件监听器到整个文档
+            document.addEventListener('click', function() {
+                initAudioContext();
+            }, { once: true });
+
+            addPianoKeyEvents();
+            setupFileUpload();
+            loadHistory();
+        });
+
+        // 优化文件上传处理
+        function setupFileUpload() {
+            const fileInput = document.getElementById('audio-upload');
+            if (fileInput) {
+                fileInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const statusMessage = document.getElementById('status-message');
+                        if (statusMessage) {
+                            statusMessage.textContent = `Selected file: ${file.name}`;
+                            statusMessage.className = 'status-message success';
+                        }
+                        
+                        const progressContainer = document.getElementById('progress-container');
+                        const progressFill = document.getElementById('progress-fill');
+                        const progressText = document.getElementById('progress-text');
+                        
+                        if (progressContainer && progressFill && progressText) {
+                            progressContainer.style.display = 'block';
+                            progressFill.style.width = '0%';
+                            progressText.textContent = '0%';
+                        }
+
+                        const audioPlayer = document.getElementById('audio-player');
+                        if (audioPlayer) {
+                            const objectURL = URL.createObjectURL(file);
+                            audioPlayer.src = objectURL;
+                            audioPlayer.style.display = 'block';
+                        }
+                    }
+                });
+            }
+        }
+
+        // 分析音频文件
+        function analyzeAudio() {
+            const fileInput = document.getElementById('audio-upload');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                const statusMessage = document.getElementById('status-message');
+                statusMessage.textContent = 'Please select a file first';
+                statusMessage.className = 'status-message error';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // 显示进度条
+            const progressContainer = document.getElementById('progress-container');
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            progressContainer.style.display = 'block';
+
+            // 显示状态消息
+            const statusMessage = document.getElementById('status-message');
+            statusMessage.textContent = 'Analyzing audio file...';
+            statusMessage.className = 'status-message success';
+
+            // 发送文件到服务器
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // 更新进度
+                progressFill.style.width = '100%';
+                progressText.textContent = '100%';
+                
+                // 显示结果
+                statusMessage.textContent = 'Analysis complete!';
+                statusMessage.className = 'status-message success';
+                
+                // 显示和弦信息
+                displayChordInfo(data.chords);
+                
+                // 显示音频播放器
+                const audioPlayer = document.getElementById('audio-player');
+                audioPlayer.src = data.audio_url;
+                audioPlayer.style.display = 'block';
+
+                // 更新和弦表格
+                updateChordTable(data.chords);
+            })
+            .catch(error => {
+                statusMessage.textContent = error.message;
+                statusMessage.className = 'status-message error';
+            });
+        }
+
+        // 显示和弦信息的函数
+        function displayChordInfo(chords) {
+            const chordDisplay = document.getElementById('chord-display-text');
+            if (chords && chords.length > 0) {
+                chordDisplay.textContent = chords[0].chord;
+            } else {
+                chordDisplay.textContent = 'No Chord';
+            }
+        }
+
+        // 更新和弦表格的函数
+        function updateChordTable(chords) {
+            const tbody = document.getElementById('chord-table-body');
+            tbody.innerHTML = '';
+            if (chords && chords.length > 0) {
+                chords.forEach(chord => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${chord.chord}</td>
+                        <td>${chord.start_time.toFixed(2)}s</td>
+                        <td>${chord.end_time.toFixed(2)}s</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="3">No chords found</td></tr>';
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/" class="logo">Chorizon</a>
+        <div class="nav-links">
+            <!-- 低八度 -->
+            <a href="/" class="white-key" data-note="C1"><span>C1</span></a>
+            <a href="/info" class="black-key" data-note="C#1"><span>C#1</span></a>
+            <a href="/" class="white-key" data-note="D1"><span>D1</span></a>
+            <a href="/info" class="black-key" data-note="D#1"><span>D#1</span></a>
+            <a href="/" class="white-key" data-note="E1"><span>E1</span></a>
+            <a href="/" class="white-key" data-note="F1"><span>F1</span></a>
+            <a href="/info" class="black-key" data-note="F#1"><span>F#1</span></a>
+            <a href="/" class="white-key" data-note="G1"><span>G1</span></a>
+            <a href="/info" class="black-key" data-note="G#1"><span>G#1</span></a>
+            <a href="/" class="white-key" data-note="A1"><span>A1</span></a>
+            <a href="/info" class="black-key" data-note="A#1"><span>A#1</span></a>
+            <a href="/" class="white-key" data-note="B1"><span>B1</span></a>
+            <a href="/" class="white-key" data-note="C2"><span>C2</span></a>
+            <!-- 中八度 -->
+            <a href="/info" class="black-key" data-note="C#2"><span>C#2</span></a>
+            <a href="/" class="white-key" data-note="D2"><span>D2</span></a>
+            <a href="/info" class="black-key" data-note="D#2"><span>D#2</span></a>
+            <a href="/" class="white-key" data-note="E2"><span>E2</span></a>
+            <a href="/" class="white-key" data-note="F2"><span>F2</span></a>
+            <a href="/info" class="black-key" data-note="F#2"><span>F#2</span></a>
+            <a href="/" class="white-key" data-note="G2"><span>G2</span></a>
+            <a href="/info" class="black-key" data-note="G#2"><span>G#2</span></a>
+            <a href="/" class="white-key" data-note="A2"><span>A2</span></a>
+            <a href="/info" class="black-key" data-note="A#2"><span>A#2</span></a>
+            <a href="/" class="white-key" data-note="B2"><span>B2</span></a>
+            <a href="/" class="white-key" data-note="C3"><span>C3</span></a>
+            <!-- 高八度 -->
+            <a href="/info" class="black-key" data-note="C#3"><span>C#3</span></a>
+            <a href="/" class="white-key" data-note="D3"><span>D3</span></a>
+            <a href="/info" class="black-key" data-note="D#3"><span>D#3</span></a>
+            <a href="/" class="white-key" data-note="E3"><span>E3</span></a>
+            <a href="/" class="white-key" data-note="F3"><span>F3</span></a>
+            <a href="/info" class="black-key" data-note="F#3"><span>F#3</span></a>
+            <a href="/" class="white-key" data-note="G3"><span>G3</span></a>
+            <a href="/info" class="black-key" data-note="G#3"><span>G#3</span></a>
+            <a href="/" class="white-key" data-note="A3"><span>A3</span></a>
+            <a href="/info" class="black-key" data-note="A#3"><span>A#3</span></a>
+            <a href="/" class="white-key" data-note="B3"><span>B3</span></a>
+            <a href="/" class="white-key" data-note="C3"><span>C3</span></a>
+        </div>
+    </div>
+    <div class="container">
+        <h1>Chord Visualizer</h1>
+        <div class="upload-section">
+            <h2>Upload Audio File</h2>
+            <div class="button-group">
+                <label for="audio-upload">Choose File</label>
+                <input type="file" id="audio-upload" accept="audio/*" lang="en">
+                <button onclick="analyzeAudio()">Analyze</button>
+            </div>
+            <div id="status-message" class="status-message"></div>
+            <div class="progress-container" id="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="progress-text" id="progress-text">0%</div>
+            </div>
+        </div>
+        <div class="result-section">
+            <h2>Current Chord</h2>
+            <div id="chord-display-text">No Chord</div>
+        <audio id="audio-player" controls></audio>
+            <h3>Chord Progression</h3>
+            <button class="toggle-button" onclick="toggleChordTable()">Show Chord Table</button>
+            <div id="chord-table-container">
+                <table class="chord-table" id="chord-table">
+                    <thead>
+                        <tr>
+                            <th>Chord</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="chord-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="history-section">
+            <h2>Analysis History</h2>
+            <button onclick="loadHistory()">Refresh History</button>
+            <div id="history-list">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Filename</th>
+                            <th>First Chord</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chords = [];
+        let audioPlayer = document.getElementById("audio-player");
+        let currentFile = null;
+
+        function showStatus(message, isError = false) {
+            const statusDiv = document.getElementById("status-message");
+            statusDiv.className = `status-message ${isError ? 'error' : 'success'}`;
+            statusDiv.textContent = message;
+        }
+
+        function updateProgress(percent, message) {
+            const progressContainer = document.getElementById("progress-container");
+            const progressFill = document.getElementById("progress-fill");
+            const progressText = document.getElementById("progress-text");
+            
+            progressContainer.style.display = "block";
+            progressFill.style.width = `${percent}%`;
+            progressText.textContent = message;
+        }
+
+        function analyzeAudio() {
+            const file = document.getElementById("audio-upload").files[0];
+            if (!file) {
+                showStatus("Please select an audio file", true);
+                return;
+            }
+
+            currentFile = file;
+            showStatus("Analyzing audio file...");
+            updateProgress(0, "Starting analysis...");
+
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // 模拟上传进度
+            let uploadProgress = 0;
+            const uploadInterval = setInterval(() => {
+                uploadProgress += 5;
+                if (uploadProgress <= 30) {
+                    updateProgress(uploadProgress, "Uploading file...");
+                }
+            }, 100);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                clearInterval(uploadInterval);
+                updateProgress(30, "Processing audio...");
+
+                if (data.error) {
+                    showStatus(data.error, true);
+                    document.getElementById("progress-container").style.display = "none";
+                } else {
+                    // 模拟处理进度
+                    let processProgress = 30;
+                    const processInterval = setInterval(() => {
+                        processProgress += 2;
+                        if (processProgress <= 90) {
+                            updateProgress(processProgress, "Analyzing chords...");
+                        }
+                    }, 100);
+
+                    setTimeout(() => {
+                        clearInterval(processInterval);
+                        updateProgress(100, "Analysis complete!");
+                        window.chords = data.chords;  // 使用全局变量
+                        showStatus("Analysis complete! You can now play the audio.");
+                        
+                        // 设置音频播放器
+                        const objectURL = URL.createObjectURL(file);
+                audioPlayer.src = objectURL;
+                        
+                        // 更新和弦表格
+                        updateChordTable(data.chords);
+                        
+                        // 设置时间更新事件
+                audioPlayer.ontimeupdate = updateChords;
+
+                        // 刷新历史记录
+                        loadHistory();
+
+                        // 3秒后隐藏进度条
+                        setTimeout(() => {
+                            document.getElementById("progress-container").style.display = "none";
+                        }, 3000);
+                    }, 2000);
+                }
+            })
+            .catch(error => {
+                clearInterval(uploadInterval);
+                showStatus(`Error: ${error.message}`, true);
+                document.getElementById("progress-container").style.display = "none";
+            });
+        }
+
+        function updateChordTable(chords) {
+            const tbody = document.getElementById("chord-table-body");
+            tbody.innerHTML = '';
+            if (chords && chords.length > 0) {
+                chords.forEach(chord => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${chord.chord}</td>
+                        <td>${chord.start_time.toFixed(2)}s</td>
+                        <td>${chord.end_time.toFixed(2)}s</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="3">No chords found</td></tr>';
+            }
+        }
+
+        function updateChords() {
+            const currentTime = audioPlayer.currentTime;
+            let chordText = "No Chord";
+            
+            for (let chord of window.chords) {  // 使用全局变量
+                if (currentTime >= chord.start_time && currentTime < chord.end_time) {
+                    chordText = chord.chord;
+                    break;
+                }
+            }
+            
+            document.getElementById("chord-display-text").innerText = chordText;
+        }
+
+        function toggleChordTable() {
+            const table = document.getElementById("chord-table");
+            const button = document.querySelector(".toggle-button");
+            table.classList.toggle("show");
+            button.textContent = table.classList.contains("show") ? "Hide Chord Table" : "Show Chord Table";
+        }
+
+        function loadHistory() {
+            fetch('/history')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById("history-table-body").innerHTML = 
+                            `<tr><td colspan="4" style="color: red;">${data.error}</td></tr>`;
+                    } else {
+                        const tbody = document.getElementById("history-table-body");
+                        if (data.history.length === 0) {
+                            tbody.innerHTML = "<tr><td colspan='4'>No analysis history found</td></tr>";
+                            return;
+                        }
+
+                        let html = '';
+                        data.history.forEach(item => {
+                            const timestamp = item.timestamp;  // 直接使用后端返回的时间戳
+                            const firstChord = item.chords[0];
+                            const summary = `${firstChord.chord} (${firstChord.start_time.toFixed(2)}s - ${firstChord.end_time.toFixed(2)}s)${item.chords.length > 1 ? ` ... +${item.chords.length - 1} more` : ''}`;
+                            html += `
+                                <tr>
+                                    <td>${timestamp}</td>
+                                    <td>${item.filename}</td>
+                                    <td>${summary}</td>
+                                    <td>
+                                        <button class="detail-button" onclick="toggleDetails('${timestamp}')">View Details</button>
+                                        <button class="reload-button" onclick="reloadHistoryItem('${timestamp}', ${JSON.stringify(item.chords).replace(/"/g, '&quot;')})">Reload</button>
+                                    </td>
+                                </tr>
+                                <tr id="history-${timestamp}" class="history-details">
+                                    <td colspan="4">
+                                        ${item.chords.map(chord => 
+                                            `${chord.chord} (${chord.start_time.toFixed(2)}s - ${chord.end_time.toFixed(2)}s)`
+                                        ).join(', ')}
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        tbody.innerHTML = html;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById("history-table-body").innerHTML = 
+                        `<tr><td colspan="4" style="color: red;">Error loading history: ${error.message}</td></tr>`;
+                });
+        }
+
+        // 添加切换详情显示的函数
+        function toggleDetails(timestamp) {
+            const detailsRow = document.getElementById(`history-${timestamp}`);
+            const button = detailsRow.previousElementSibling.querySelector('.detail-button');
+            detailsRow.classList.toggle('expanded');
+            button.textContent = detailsRow.classList.contains('expanded') ? 'Hide Details' : 'View Details';
+        }
+
+        // 添加重新加载历史记录项的函数
+        function reloadHistoryItem(timestamp, chordsData) {
+            // 更新当前和弦数据
+            window.chords = chordsData;  // 使用全局变量
+            
+            // 更新和弦表格
+            updateChordTable(chordsData);
+            
+            // 从 Redis 获取音频数据
+            fetch(`/get_audio/${timestamp}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    // 创建音频 URL
+                    const objectURL = URL.createObjectURL(blob);
+                    
+                    // 更新音频播放器
+                    audioPlayer.src = objectURL;
+                    
+                    // 设置时间更新事件
+                    audioPlayer.ontimeupdate = updateChords;
+                    
+                    // 显示成功消息
+                    showStatus("History record loaded successfully! You can start playing.");
+                    
+                    // 滚动到播放器位置
+                    document.querySelector('.result-section').scrollIntoView({ behavior: 'smooth' });
+                })
+                .catch(error => {
+                    showStatus(`Loading failed: ${error.message}`, true);
+                });
+        }
+    </script>
+</body>
+</html>

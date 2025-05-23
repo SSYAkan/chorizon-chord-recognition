@@ -1,0 +1,615 @@
+body { 
+    font-family: 'Roboto', Arial, sans-serif;
+    text-align: center; 
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+}
+
+.container { 
+    max-width: 800px; 
+    margin: auto; 
+    padding: 20px;
+}
+
+.nav-bar {
+    background-color: #000;
+    padding: 15px 0;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow: visible;
+    height: 120px;
+    width: 100%;
+}
+
+.logo {
+    position: relative;
+    font-family: 'Cormorant', serif;
+    font-size: 60px;
+    font-weight: 700;
+    font-style: italic;
+    color: #aeaeae !important;
+    text-decoration: none;
+    z-index: 2;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+.nav-links {
+    display: flex;
+    align-items: flex-start;
+    padding: 0;
+    height: 60px;
+    position: relative;
+    width: 100%;
+    justify-content: center;
+}
+
+.nav-bar a {
+    color: #333;
+    text-decoration: none;
+    position: relative;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    text-align: center;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    font-size: 14px;
+    padding-bottom: 5px;
+}
+
+/* 白键样式 */
+.nav-bar a.white-key {
+    background-color: #fff;
+    width: 40px;
+    height: 80px;
+    border-radius: 0 0 3px 3px;
+    margin: 0 2px;
+}
+
+/* 黑键样式 */
+.nav-bar a.black-key {
+    background-color: #000;
+    width: 24px;
+    height: 40px;
+    border-radius: 0 0 3px 3px;
+    margin: 0 -12px;
+    z-index: 1;
+    color: #fff;
+}
+
+/* 添加琴键文字提示 */
+.nav-bar a span {
+    position: absolute;
+    bottom: 5px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.nav-bar a:hover span {
+    opacity: 1;
+}
+
+.nav-bar a:hover {
+    background-color: #f0f0f0;
+}
+
+.nav-bar a.black-key:hover {
+    background-color: #333;
+}
+
+.nav-bar a.active {
+    background-color: #4A90E2;
+    color: white;
+}
+
+.nav-bar a.black-key.active {
+    background-color: #357ABD;
+}
+
+/* 上传部分样式 */
+.upload-section {
+    background-color: #f5f5f5;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+
+/* 文件上传按钮样式 */
+#audio-upload {
+    display: none;  /* 隐藏原始文件输入框 */
+}
+
+.upload-section label[for="audio-upload"] {
+    display: inline-block;
+    padding: 12px 30px;
+    background-color: #ffffff;
+    color: rgb(103, 103, 103);
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    min-width: 120px;
+    text-align: center;
+}
+
+.upload-section label[for="audio-upload"]:hover {
+    background-color: #749ac1;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transform: translateY(-1px);
+}
+
+/* 分析按钮样式 */
+.upload-section button {
+    padding: 12px 30px;
+    background-color: #ffffff;
+    color: rgb(103, 103, 103);
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.upload-section button:hover {
+    background-color: #749ac1;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transform: translateY(-1px);
+}
+
+/* 按钮组样式 */
+.upload-section .button-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;  /* 水平居中 */
+    gap: 60px;  /* 增加按钮之间的间距 */
+    margin-top: 25px;  /* 增加与上方标题的间距 */
+    margin-bottom: 20px;  /* 增加与下方进度条的间距 */
+}
+
+/* 结果部分样式 */
+.result-section {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#chord-display-text { 
+    font-size: 32px; 
+    margin: 20px 0;
+    font-weight: bold;
+    color: #4A90E2;
+}
+
+/* 和弦表格样式 */
+.chord-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    display: none;
+}
+
+.chord-table.show {
+    display: table;
+}
+
+.chord-table th, .chord-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+.chord-table th {
+    background-color: #f5f5f5;
+}
+
+.chord-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+/* 音频播放器样式 */
+#audio-player {
+    width: 100%;
+    margin: 20px 0;
+}
+
+/* 状态消息样式 */
+.status-message {
+    margin-top: 10px;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-weight: 500;
+    text-align: center;
+    transition: all 0.3s ease;
+    display: block;  /* 确保默认显示 */
+    min-height: 20px;  /* 确保即使没有内容也有高度 */
+}
+
+.status-message.success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+
+.status-message.error {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+}
+
+/* 历史记录部分样式 */
+.history-section {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+.history-table th, .history-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+.history-table th {
+    background-color: #f5f5f5;
+}
+
+.history-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+.history-table tr.expanded td {
+    background-color: #f5f5f5;
+}
+
+.history-details {
+    display: none;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-top: 1px solid #ddd;
+}
+
+.history-details.expanded {
+    display: table-row;
+}
+
+/* 按钮样式 */
+button {
+    padding: 8px 20px;
+    background-color: #ffffff;
+    color: rgb(103, 103, 103);
+    border: none;
+    border-radius: 25px;  /* 两头圆弧状 */
+    cursor: pointer;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+button:hover {
+    background-color: #749ac1;  /* 灰蓝色 */
+    color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 历史记录按钮样式 */
+.history-table button {
+    padding: 6px 12px;
+    margin: 8px 4px;  /* 增加上下间距 */
+    font-size: 12px;
+}
+
+/* 移除特定按钮的颜色样式 */
+.detail-button, .reload-button, .toggle-button, .history-section button {
+    background-color: #ffffff;
+    color: rgb(103, 103, 103);
+    margin: 8px 4px;  /* 增加上下间距 */
+}
+
+.detail-button:hover, .reload-button:hover, .toggle-button:hover, .history-section button:hover {
+    background-color: #749ac1;
+    color: white;
+}
+
+/* 上传部分按钮样式 */
+.upload-section button {
+    padding: 12px 30px;
+    background-color: #ffffff;
+    color: rgb(103, 103, 103);
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.upload-section button:hover {
+    background-color: #749ac1;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transform: translateY(-1px);
+}
+
+/* 文件上传按钮样式 */
+.upload-section label[for="audio-upload"] {
+    display: inline-block;
+    padding: 12px 30px;
+    background-color: #ffffff;
+    color: rgb(103, 103, 103);
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    min-width: 120px;
+    text-align: center;
+}
+
+.upload-section label[for="audio-upload"]:hover {
+    background-color: #749ac1;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transform: translateY(-1px);
+}
+
+/* 进度条样式 */
+.progress-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 20px auto;
+    display: none;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #f0f0f0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    width: 0%;
+    height: 100%;
+    background-color: #4A90E2;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    margin-top: 5px;
+    color: #666;
+}
+
+/* 信息页面特定样式 */
+.info-section {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    margin: 20px 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    text-align: left;
+}
+
+.info-section h2 {
+    color: #4A90E2;
+    margin-top: 0;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.info-section p {
+    line-height: 1.6;
+    color: #333;
+}
+
+.info-section ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.info-section li {
+    margin: 10px 0;
+    padding-left: 20px;
+    position: relative;
+}
+
+.info-section li:before {
+    content: "•";
+    color: #4A90E2;
+    position: absolute;
+    left: 0;
+}
+
+.contact-info {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.contact-info a {
+    color: #4A90E2;
+    text-decoration: none;
+    margin-left: 10px;
+}
+
+.contact-info a:hover {
+    text-decoration: underline;
+}
+
+.github-link {
+    display: inline-block;
+    background-color: #4A90E2;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    margin-top: 20px;
+}
+
+.github-link:hover {
+    background-color: #357ABD;
+}
+
+/* 信息页面按钮样式 */
+.info-section .github-link {
+    display: inline-block;
+    padding: 12px 30px;
+    background-color: #ffffff;
+    color: rgb(103, 103, 103);
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    margin-top: 20px;
+}
+
+.info-section .github-link:hover {
+    background-color: #749ac1;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transform: translateY(-1px);
+}
+
+/* 标题样式 */
+h1 {
+    font-family: 'Cormorant', serif;
+    font-size: 2.5em;
+    font-weight: 700;
+    margin-bottom: 30px;
+    color: #333;
+}
+
+h2 {
+    font-family: 'Montserrat', Arial, sans-serif;
+    font-size: 1.4em;
+    font-weight: normal;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+h3 {
+    font-family: 'Montserrat', Arial, sans-serif;
+    font-size: 1.0em;
+    font-weight: normal;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+/* 信息页面按钮样式 */
+.info-section .github-link {
+    display: inline-block;
+    padding: 12px 30px;
+    background-color: #ffffff;
+    color: rgb(103, 103, 103);
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    margin-top: 20px;
+}
+
+.info-section .github-link:hover {
+    background-color: #749ac1;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transform: translateY(-1px);
+}
+
+.projects {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 40px;
+}
+
+.project-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    width: 300px;
+    transition: transform 0.3s ease;
+}
+
+.project-card:hover {
+    transform: translateY(-5px);
+}
+
+.project-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.project-content {
+    padding: 20px;
+}
+
+.project-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.project-description {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.project-link {
+    display: inline-block;
+    padding: 8px 20px;
+    background-color: #000;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.project-link:hover {
+    background-color: #333;
+} 

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Info - Chord Visualizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&family=Montserrat:wght@400;600&family=Dancing+Script:wght@700&family=Cormorant:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        // 创建音频上下文
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // 创建音符频率映射
+        const noteFrequencies = {
+            // 低八度
+            'C1': 130.81, 'C#1': 138.59, 'D1': 146.83, 'D#1': 155.56,
+            'E1': 164.81, 'F1': 174.61, 'F#1': 185.00, 'G1': 196.00,
+            'G#1': 207.65, 'A1': 220.00, 'A#1': 233.08, 'B1': 246.94,
+            // 中八度
+            'C2': 261.63, 'C#2': 277.18, 'D2': 293.66, 'D#2': 311.13,
+            'E2': 329.63, 'F2': 349.23, 'F#2': 369.99, 'G2': 392.00,
+            'G#2': 415.30, 'A2': 440.00, 'A#2': 466.16, 'B2': 493.88,
+            // 高八度
+            'C3': 523.25, 'C#3': 554.37, 'D3': 587.33, 'D#3': 622.25,
+            'E3': 659.25, 'F3': 698.46, 'F#3': 739.99, 'G3': 783.99,
+            'G#3': 830.61, 'A3': 880.00, 'A#3': 932.33, 'B3': 987.77
+        };
+
+        // 播放音符函数
+        function playNote(note) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.value = noteFrequencies[note];
+            
+            // 根据音高调整音量
+            let baseGain = 0.1;
+            let octave = parseInt(note.slice(-1));  // 获取八度数字
+            let gainMultiplier = 1;
+            
+            // 低八度音量更大
+            if (octave === 1) {
+                gainMultiplier = 1.5;  // 低八度音量增加50%
+            } else if (octave === 2) {
+                gainMultiplier = 1.0;  // 中八度保持原音量
+            } else if (octave === 3) {
+                gainMultiplier = 0.8;  // 高八度音量降低20%
+            }
+            
+            gainNode.gain.value = baseGain * gainMultiplier;
+            
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        // 为琴键添加鼠标事件
+        function addPianoKeyEvents() {
+            const keys = document.querySelectorAll('.nav-bar a');
+            keys.forEach(key => {
+                key.addEventListener('mouseenter', () => {
+                    const note = key.getAttribute('data-note');
+                    if (noteFrequencies[note]) {
+                        playNote(note);
+                    }
+                });
+            });
+        }
+
+        // 页面加载完成后添加事件
+        document.addEventListener('DOMContentLoaded', addPianoKeyEvents);
+    </script>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/" class="logo">Chorizon</a>
+        <div class="nav-links">
+            <!-- 低八度 -->
+            <a href="/" class="white-key" data-note="C1"><span>C1</span></a>
+            <a href="/info" class="black-key" data-note="C#1"><span>C#1</span></a>
+            <a href="/" class="white-key" data-note="D1"><span>D1</span></a>
+            <a href="/info" class="black-key" data-note="D#1"><span>D#1</span></a>
+            <a href="/" class="white-key" data-note="E1"><span>E1</span></a>
+            <a href="/" class="white-key" data-note="F1"><span>F1</span></a>
+            <a href="/info" class="black-key" data-note="F#1"><span>F#1</span></a>
+            <a href="/" class="white-key" data-note="G1"><span>G1</span></a>
+            <a href="/info" class="black-key" data-note="G#1"><span>G#1</span></a>
+            <a href="/" class="white-key" data-note="A1"><span>A1</span></a>
+            <a href="/info" class="black-key" data-note="A#1"><span>A#1</span></a>
+            <a href="/" class="white-key" data-note="B1"><span>B1</span></a>
+            <a href="/" class="white-key" data-note="C2"><span>C2</span></a>
+            <!-- 中八度 -->
+            <a href="/info" class="black-key" data-note="C#2"><span>C#2</span></a>
+            <a href="/" class="white-key" data-note="D2"><span>D2</span></a>
+            <a href="/info" class="black-key" data-note="D#2"><span>D#2</span></a>
+            <a href="/" class="white-key" data-note="E2"><span>E2</span></a>
+            <a href="/" class="white-key" data-note="F2"><span>F2</span></a>
+            <a href="/info" class="black-key" data-note="F#2"><span>F#2</span></a>
+            <a href="/" class="white-key" data-note="G2"><span>G2</span></a>
+            <a href="/info" class="black-key" data-note="G#2"><span>G#2</span></a>
+            <a href="/" class="white-key" data-note="A2"><span>A2</span></a>
+            <a href="/info" class="black-key" data-note="A#2"><span>A#2</span></a>
+            <a href="/" class="white-key" data-note="B2"><span>B2</span></a>
+            <a href="/" class="white-key" data-note="C3"><span>C3</span></a>
+            <!-- 高八度 -->
+            <a href="/info" class="black-key" data-note="C#3"><span>C#3</span></a>
+            <a href="/" class="white-key" data-note="D3"><span>D3</span></a>
+            <a href="/info" class="black-key" data-note="D#3"><span>D#3</span></a>
+            <a href="/" class="white-key" data-note="E3"><span>E3</span></a>
+            <a href="/" class="white-key" data-note="F3"><span>F3</span></a>
+            <a href="/info" class="black-key" data-note="F#3"><span>F#3</span></a>
+            <a href="/" class="white-key" data-note="G3"><span>G3</span></a>
+            <a href="/info" class="black-key" data-note="G#3"><span>G#3</span></a>
+            <a href="/" class="white-key" data-note="A3"><span>A3</span></a>
+            <a href="/info" class="black-key" data-note="A#3"><span>A#3</span></a>
+            <a href="/" class="white-key" data-note="B3"><span>B3</span></a>
+            <a href="/" class="white-key" data-note="C3"><span>C3</span></a>
+        </div>
+    </div>
+    <div class="container">
+        <div class="info-section">
+            <h2>About Chorizon</h2>
+            <p>Chorizon is a powerful tool that helps you analyze and visualize chord progressions in audio files. It uses advanced audio processing techniques to identify chords in real-time and provides a comprehensive view of the musical structure.</p>
+        </div>
+
+        <div class="info-section">
+            <h2>Features</h2>
+            <ul>
+                <li>Real-time chord recognition and display</li>
+                <li>Detailed chord progression analysis</li>
+                <li>Interactive audio playback with chord highlighting</li>
+                <li>History tracking of analyzed files</li>
+                <li>Support for various audio formats</li>
+            </ul>
+        </div>
+
+        <div class="info-section">
+            <h2>Contact</h2>
+            <div class="contact-info">
+                <span>Email:</span>
+                <a href="mailto:your.email@example.com">your.email@example.com</a>
+            </div>
+            <div class="contact-info">
+                <span>NetEase Cloud Music:</span>
+                <a href="https://music.163.com/#/user/home?id=your_id" target="_blank">Your Music Profile</a>
+            </div>
+            <a href="https://github.com/SSYAkan/chord" class="github-link" target="_blank">View on GitHub</a>
+        </div>
+    </div>
+</body>
+</html> 

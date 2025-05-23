@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的作品集</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Dancing+Script:wght@700&family=Cormorant:wght@400;700&family=Montserrat:wght@400;500;600&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        // 创建音频上下文
+        let audioContext = null;
+        
+        // 创建音符频率映射
+        const noteFrequencies = {
+            // 低八度
+            'C1': 130.81, 'C#1': 138.59, 'D1': 146.83, 'D#1': 155.56,
+            'E1': 164.81, 'F1': 174.61, 'F#1': 185.00, 'G1': 196.00,
+            'G#1': 207.65, 'A1': 220.00, 'A#1': 233.08, 'B1': 246.94,
+            // 中八度
+            'C2': 261.63, 'C#2': 277.18, 'D2': 293.66, 'D#2': 311.13,
+            'E2': 329.63, 'F2': 349.23, 'F#2': 369.99, 'G2': 392.00,
+            'G#2': 415.30, 'A2': 440.00, 'A#2': 466.16, 'B2': 493.88,
+            // 高八度
+            'C3': 523.25, 'C#3': 554.37, 'D3': 587.33, 'D#3': 622.25,
+            'E3': 659.25, 'F3': 698.46, 'F#3': 739.99, 'G3': 783.99,
+            'G#3': 830.61, 'A3': 880.00, 'A#3': 932.33, 'B3': 987.77
+        };
+
+        // 播放音符函数
+        function playNote(note) {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                audioContext.resume();
+            }
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.value = noteFrequencies[note];
+            
+            let baseGain = 0.1;
+            let octave = parseInt(note.slice(-1));
+            let gainMultiplier = 1;
+            
+            if (octave === 1) {
+                gainMultiplier = 1.5;
+            } else if (octave === 2) {
+                gainMultiplier = 1.0;
+            } else if (octave === 3) {
+                gainMultiplier = 0.8;
+            }
+            
+            gainNode.gain.value = baseGain * gainMultiplier;
+            
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        // 为琴键添加鼠标事件
+        function addPianoKeyEvents() {
+            const keys = document.querySelectorAll('.nav-bar a');
+            keys.forEach(key => {
+                key.addEventListener('mouseenter', () => {
+                    const note = key.getAttribute('data-note');
+                    if (noteFrequencies[note]) {
+                        playNote(note);
+                    }
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', addPianoKeyEvents);
+    </script>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/" class="logo">Chorizon</a>
+        <div class="nav-links">
+            <!-- 低八度 -->
+            <a href="/" class="white-key" data-note="C1"></a>
+            <a href="/info" class="black-key" data-note="C#1"></a>
+            <a href="/" class="white-key" data-note="D1"></a>
+            <a href="/info" class="black-key" data-note="D#1"></a>
+            <a href="/" class="white-key" data-note="E1"></a>
+            <a href="/" class="white-key" data-note="F1"></a>
+            <a href="/info" class="black-key" data-note="F#1"></a>
+            <a href="/" class="white-key" data-note="G1"></a>
+            <a href="/info" class="black-key" data-note="G#1"></a>
+            <a href="/" class="white-key" data-note="A1"></a>
+            <a href="/info" class="black-key" data-note="A#1"></a>
+            <a href="/" class="white-key" data-note="B1"></a>
+            <a href="/" class="white-key" data-note="C2"></a>
+            <!-- 中八度 -->
+            <a href="/info" class="black-key" data-note="C#2"></a>
+            <a href="/" class="white-key" data-note="D2"></a>
+            <a href="/info" class="black-key" data-note="D#2"></a>
+            <a href="/" class="white-key" data-note="E2"></a>
+            <a href="/" class="white-key" data-note="F2"></a>
+            <a href="/info" class="black-key" data-note="F#2"></a>
+            <a href="/" class="white-key" data-note="G2"></a>
+            <a href="/info" class="black-key" data-note="G#2"></a>
+            <a href="/" class="white-key" data-note="A2"></a>
+            <a href="/info" class="black-key" data-note="A#2"></a>
+            <a href="/" class="white-key" data-note="B2"></a>
+            <a href="/" class="white-key" data-note="C3"></a>
+            <!-- 高八度 -->
+            <a href="/info" class="black-key" data-note="C#3"></a>
+            <a href="/" class="white-key" data-note="D3"></a>
+            <a href="/info" class="black-key" data-note="D#3"></a>
+            <a href="/" class="white-key" data-note="E3"></a>
+            <a href="/" class="white-key" data-note="F3"></a>
+            <a href="/info" class="black-key" data-note="F#3"></a>
+            <a href="/" class="white-key" data-note="G3"></a>
+            <a href="/info" class="black-key" data-note="G#3"></a>
+            <a href="/" class="white-key" data-note="A3"></a>
+            <a href="/info" class="black-key" data-note="A#3"></a>
+            <a href="/" class="white-key" data-note="B3"></a>
+            <a href="/" class="white-key" data-note="C3"></a>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>我的作品集</h1>
+            <p class="subtitle">探索我的音乐和技术项目</p>
+        </header>
+
+        <div class="projects">
+            <div class="project-card">
+                <img src="/static/images/chord_detection.jpg" alt="和弦识别系统" class="project-image">
+                <div class="project-content">
+                    <h2 class="project-title">Chorizon</h2>
+                    <p class="project-description">A madmom-based chord recognition system that utilizes deep learning to recognize musical chord progressions.</p>
+                    <a href="/chorizon" class="project-link">View Project</a>
+                </div>
+            </div>
+            
+            <div class="project-card">
+                <img src="/static/images/music_works.jpg" alt="音乐作品" class="project-image">
+                <div class="project-content">
+                    <h2 class="project-title">Music Works</h2>
+                    <p class="project-description">My original music collection, including piano pieces, electronic music, and various other styles.</p>
+                    <a href="https://soundcloud.com/your-profile" class="project-link" target="_blank">Listen</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 我的作品集. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
